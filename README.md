@@ -88,7 +88,7 @@ backend eugen_tcp_backend
 
 Результат настроки haproxy, для наглядности прогнал 10 циклов (один цикл по весам 2+3+4=9) и убедился, что не получится достучаться без доменного имени:
 
-<img src = "img/sf_2.png" width = 50%>
+<img src = "img/sf_2.png" width = 100%>
 
 ```
 eugenie2@eugenie2-VirtualBox:~/net-homework-sflt-02$ cat /etc/haproxy/haproxy.cfg
