@@ -165,6 +165,82 @@ backend eugen_http_backend
 - Настройте Nginx так, чтобы файлы .jpg выдавались самим Nginx (предварительно разместите несколько тестовых картинок в директории /var/www/), а остальные запросы переадресовывались на HAProxy, который в свою очередь переадресовывал их на два Simple Python server.
 - На проверку направьте конфигурационные файлы nginx, HAProxy, скриншоты с запросами jpg картинок и других файлов на Simple Python Server, демонстрирующие корректную настройку.
 
+### Решение*:
+
+Итак, все так же сначала обновил запись в /etc/hosts:
+127.0.0.1 eugen-http.com
+
+Далее настраиваем haproxy, добавив в конце /etc/haproxy/haproxy.cfg следующий блок:
+```
+frontend eugen_http_frontend
+        bind *:8081
+        mode http
+        #default_backend eugen_http_backend
+        acl acl_hanginx hdr(host) -i eugen-http.com
+        use_backend eugen_http_backend if acl_hanginx
+
+backend eugen_http_backend
+        mode http
+        balance roundrobin
+
+        server python1 127.0.0.1:8988 check
+        server python2 127.0.0.1:8989 check
+```
+
+Проверяем вывод:
+<img src = "img/sf_5.png" width = 100%>
+
+Далее настраиваем nginx. Закомментил в /etc/nginx/sites-enabled/default заданные там дефолт серверы и прослушиваемые порты,
+по сути закомментил все в этом файле
+
+Все остальные настройки проводил в /etc/nginx/conf.d/my.conf:
+```
+server {
+        listen 8085 default_server;
+        listen [::]:8085 default_server;
+
+        server_name eugen-http.com;
+
+        access_log      /var/log/nginx/example-http.com-acess.log;
+        error_log       /var/log/nginx/example-http.com-error.log;
+
+        location ~* \.jpg$ {
+                root /var/www;
+                try_files $uri =404;
+        }
+
+        location / {
+                proxy_pass http://eugen-http.com:8081;
+                proxy_set_header Host $host;
+
+        }
+}
+```
+Ну и закинул файлы .jpg в директорию /var/www/:
+```
+ls -l /var/www
+total 7608
+-rw-r--r-- 1 www-data www-data 4032506 May  4 01:58 Clouds_by_Tibor_Mokanszki.jpg
+drwxr-xr-x 2 www-data www-data    4096 May  4 11:16 html
+-rw-rw-r-- 1 eugenie2 eugenie2    8137 May  4 12:24 images.jpg
+-rw-r--r-- 1 www-data www-data  353741 May  4 01:21 meme.jpg
+-rw-r--r-- 1 www-data www-data 1957897 May  4 01:58 Monument_valley_by_orbitelambda.jpg
+-rw-r--r-- 1 www-data www-data 1408323 May  4 01:58 Province_of_the_south_of_france_by_orbitelambda.jpg
+-rw-r--r-- 1 www-data www-data    5179 May  4 02:05 test1.jpg
+-rw-r--r-- 1 www-data www-data    5762 May  4 02:05 test2.jpg
+```
+
+Перезапустил конфиг и на порту 8085 все работает:
+<img src = "img/sf_3.png" width = 100%>
+
+Проблема остается в том, что на порту 80 все принципиально не работает. Я проверял IPTABLES,\
+прослушиваемые порты через ss -tulnp и lsof -i\
+Но все равно на 80 порту 404, попробовал помучать AI,\
+но ни одна нейросеть не помогла решить проблему и все вывели,\
+что я все сделал правильно, при этом проблема с nginx, т.к. напрямую стучать в haproxy все работает:
+
+<img src = "img/sf_4.png" width = 100%>
+
 ---
 
 ### Задание 4*
