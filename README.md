@@ -241,6 +241,11 @@ drwxr-xr-x 2 www-data www-data    4096 May  4 11:16 html
 
 <img src = "img/sf_4.png" width = 100%>
 
+Проверил содержимое всех файлов /etc/nginx/ на прослушку порта 80 и везде, \
+кроме моего файла в /etc/nginx/conf.d/ они закомментированы:
+
+<img src = "img/sf_6.png" width = 100%>
+
 ---
 
 ### Задание 4*
